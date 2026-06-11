@@ -10,11 +10,12 @@ export default function TransportBar() {
   const setPlaying = useMixerStore((s) => s.setPlaying);
   const setBpm = useMixerStore((s) => s.setBpm);
 
-  const handleTogglePlay = () => {
+  const handleTogglePlay = async () => {
     if (isPlaying) {
       audioEngine.stop();
       setPlaying(false);
     } else {
+      await audioEngine.ensureStarted();
       audioEngine.play();
       setPlaying(true);
     }

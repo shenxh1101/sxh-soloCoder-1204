@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Save, Trash2, Download } from 'lucide-react';
 import { useMixerStore } from '@/stores/mixerStore';
 import { usePresetStore } from '@/stores/presetStore';
+import { audioEngine } from '@/lib/audioEngine';
 import type { Preset } from '@/types/mixer';
 
 export default function PresetManager() {
@@ -41,6 +42,7 @@ export default function PresetManager() {
     const preset = presets.find((p) => p.id === selectedPresetId);
     if (preset) {
       loadState(preset.state);
+      audioEngine.applyMixerState(preset.state.tracks, preset.state.bpm, preset.state.masterEq);
       showMessage(`预设 "${preset.name}" 已加载`);
     }
   };

@@ -1,5 +1,5 @@
 import * as Tone from 'tone';
-import type { TrackState } from '@/types/mixer';
+import type { TrackState, MasterEqState } from '@/types/mixer';
 
 const VOLUME_MIN = -40;
 const VOLUME_MAX = 6;
@@ -17,16 +17,21 @@ class AudioEngine {
   private trackSynths: Map<string, Tone.ToneAudioNode | null> = new Map();
   private customPlayer: Map<string, Tone.Player | null> = new Map();
   private isInitialized = false;
-  private hasAnySolo = false;
+  private isAudioContextStarted = false;
 
   async init(): Promise<void> {
     if (this.isInitialized) return;
-    await Tone.start();
 
     this.masterChannel = new Tone.Channel(0, 0).toDestination();
     this.masterEq = new Tone.EQ3(0, 0, 0).connect(this.masterChannel);
 
     this.isInitialized = true;
+  }
+
+  async ensureStarted(): Promise<void> {
+    if (this.isAudioContextStarted) return;
+    await Tone.start();
+    this.isAudioContextStarted = true;
   }
 
   createTrack(track: TrackState): void {
@@ -272,7 +277,6 @@ class AudioEngine {
     if (!channel) return;
 
     const hasAnySolo = tracks.some((t) => t.isSolo);
-    this.hasAnySolo = hasAnySolo;
 
     if (hasAnySolo) {
       this.updateSoloState(tracks);
@@ -312,6 +316,20 @@ class AudioEngine {
     }
   }
 
+  applyMixerState(tracks: TrackState[], bpm: number, masterEq: MasterEqState): void {
+    this.setBpm(bpm);
+
+    tracks.forEach((track) => {
+      this.setTrackVolume(track.id, track.volume);
+      this.setTrackPan(track.id, track.pan);
+    });
+
+    this.updateSoloState(tracks);
+
+    this.setMasterEqLow(masterEq.lowGain);
+    this.setMasterEqHigh(masterEq.highGain);
+  }
+
   getMasterVolume(): number {
     return this.masterChannel?.volume.value ?? 0;
   }
@@ -339,6 +357,7 @@ class AudioEngine {
     this.trackPlayers.clear();
     this.trackChannels.clear();
     this.isInitialized = false;
+    this.isAudioContextStarted = false;
   }
 }
 

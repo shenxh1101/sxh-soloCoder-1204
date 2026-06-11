@@ -23,7 +23,7 @@ export default function Fader({
   const [isDragging, setIsDragging] = useState(false);
 
   const percent = ((value - min) / (max - min)) * 100;
-  const thumbPosition = 100 - percent;
+  const thumbPosition = percent;
 
   const calcValue = useCallback(
     (clientY: number) => {
